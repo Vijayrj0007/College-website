@@ -26,49 +26,10 @@ const app = express();
 
 // Security & utils middleware
 app.use(helmet());
-const defaultOrigins = [
-  'http://localhost:5173', 
-  'http://localhost:3000', 
-  'http://localhost:3001',
-  'https://college-website-fron-final.vercel.app',
-  'https://college-website-fron-final-eo7jvu2hl.vercel.app'
-];
-const envOrigins = (process.env.CORS_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
-const allowedOrigins = envOrigins.length ? envOrigins : defaultOrigins;
-const corsOptions = {
-  origin: (origin, callback) => {
-    const localhostRegex = /^http:\/\/localhost:\d+$/;
-    const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
-    
-    if (!origin) return callback(null, true); // non-browser or same-origin
-    if (allowedOrigins.includes(origin) || localhostRegex.test(origin) || vercelRegex.test(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
-// Additional CORS handling for all routes
+// EMERGENCY CORS FIX - Allow all origins temporarily
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
-  const localhostRegex = /^http:\/\/localhost:\d+$/;
-  
-  // Allow specific origins or any Vercel domain
-  if (origin && (allowedOrigins.includes(origin) || vercelRegex.test(origin) || localhostRegex.test(origin))) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-  
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -79,6 +40,27 @@ app.use((req, res, next) => {
   }
   next();
 });
+const defaultOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:3000', 
+  'http://localhost:3001',
+  'https://college-website-fron-final.vercel.app',
+  'https://college-website-fron-final-eo7jvu2hl.vercel.app'
+];
+const envOrigins = (process.env.CORS_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
+const allowedOrigins = envOrigins.length ? envOrigins : defaultOrigins;
+const corsOptions = {
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitize());
