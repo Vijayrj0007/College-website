@@ -16,6 +16,12 @@ const registerSchema = z.object({
 
 export async function register(req, res, next) {
   try {
+    // Ensure CORS headers are set
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
     const { name, email, password, role } = registerSchema.parse(req.body);
     if (!isEmailAllowed(email)) {
       res.status(403);

@@ -68,7 +68,21 @@ app.use(mongoSanitize());
 app.use(xss());
 app.use(morgan('dev'));
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false, skip: (req) => req.method === 'OPTIONS' });
+const authLimiter = rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
+  standardHeaders: true, 
+  legacyHeaders: false, 
+  skip: (req) => req.method === 'OPTIONS',
+  handler: (req, res) => {
+    // Ensure CORS headers are set even for rate limit responses
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.status(429).json({ message: 'Too many requests' });
+  }
+});
 app.use('/api/auth', authLimiter);
 
 // Routes
