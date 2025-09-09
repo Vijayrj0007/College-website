@@ -38,8 +38,10 @@ const allowedOrigins = envOrigins.length ? envOrigins : defaultOrigins;
 const corsOptions = {
   origin: (origin, callback) => {
     const localhostRegex = /^http:\/\/localhost:\d+$/;
+    const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
+    
     if (!origin) return callback(null, true); // non-browser or same-origin
-    if (allowedOrigins.includes(origin) || localhostRegex.test(origin)) {
+    if (allowedOrigins.includes(origin) || localhostRegex.test(origin) || vercelRegex.test(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
@@ -56,7 +58,17 @@ app.options('*', cors(corsOptions));
 
 // Additional CORS handling for all routes
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
+  const localhostRegex = /^http:\/\/localhost:\d+$/;
+  
+  // Allow specific origins or any Vercel domain
+  if (origin && (allowedOrigins.includes(origin) || vercelRegex.test(origin) || localhostRegex.test(origin))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
