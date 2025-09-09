@@ -23,9 +23,6 @@ import alumniRoutes from './src/routes/alumniRoutes.js';
 import { errorHandler, notFound } from './src/middleware/error.js';
 
 const app = express();
-const cors = require('cors');
-
-app.use(cors());
 
 // Security & utils middleware
 app.use(helmet());
