@@ -26,7 +26,12 @@ const app = express();
 
 // Security & utils middleware
 app.use(helmet());
-const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const defaultOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:3000', 
+  'http://localhost:3001',
+  'https://college-website-fron-final.vercel.app'
+];
 const envOrigins = (process.env.CORS_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = envOrigins.length ? envOrigins : defaultOrigins;
 const corsOptions = {
