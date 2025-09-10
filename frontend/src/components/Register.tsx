@@ -20,7 +20,6 @@ export const Register: React.FC = () => {
   const [step, setStep] = useState<'form' | 'otp'>('form');
   const [otp, setOtp] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
-  const [devOtp, setDevOtp] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -37,8 +36,7 @@ export const Register: React.FC = () => {
 
     try {
       if (step === 'form') {
-        const resp = await requestRegisterOtp(formData);
-        if (resp?.devOtp) setDevOtp(resp.devOtp);
+        await requestRegisterOtp(formData);
         setSuccess('OTP sent to your email. Please enter it to complete registration.');
         setStep('otp');
         setResendTimer(60);
@@ -120,11 +118,7 @@ export const Register: React.FC = () => {
                   </Alert>
                 )}
 
-                {devOtp && step === 'otp' && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Dev OTP: <span className="font-mono">{devOtp}</span>
-                  </div>
-                )}
+                
 
                 {step === 'otp' && (
                   <div className="flex items-center justify-between">
@@ -135,8 +129,7 @@ export const Register: React.FC = () => {
                       onClick={async () => {
                         try {
                           setIsLoading(true);
-                          const resp2 = await resendOtp(formData.email, 'register');
-                          if (resp2?.devOtp) setDevOtp(resp2.devOtp);
+                          await resendOtp(formData.email, 'register');
                           setResendTimer(60);
                           const interval2 = setInterval(() => {
                             setResendTimer((t) => {

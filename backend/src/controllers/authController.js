@@ -16,12 +16,6 @@ const registerSchema = z.object({
 
 export async function register(req, res, next) {
   try {
-    // Ensure CORS headers are set
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
     const { name, email, password, role } = registerSchema.parse(req.body);
     if (!isEmailAllowed(email)) {
       res.status(403);
@@ -72,7 +66,7 @@ export async function me(req, res) {
   res.json({ user: req.user });
 }
 
-// OTP verification endpoints
+// ✅ Updated verifyRegister (returns token + user)
 export async function verifyRegister(req, res, next) {
   try {
     const { email, otp } = z.object({ email: z.string().email(), otp: z.string().length(6) }).parse(req.body);
@@ -81,19 +75,30 @@ export async function verifyRegister(req, res, next) {
       res.status(400);
       throw new Error('Invalid or expired OTP');
     }
-    // Pull meta to finalize user creation
-    // Simpler: require client to resend name/password/role upon verify
+
     const { name, password, role } = z
       .object({ name: z.string().min(2), password: z.string().min(6), role: z.enum(['student', 'teacher', 'alumni', 'admin']) })
       .parse(req.body);
+
     const exists = await User.findOne({ email });
     if (exists) {
       res.status(400);
       throw new Error('Email already registered');
     }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, passwordHash, role });
-    res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'dev_secret',
+      { expiresIn: '1d' }
+    );
+
+    res.status(201).json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (err) {
     next(err);
   }
@@ -112,7 +117,11 @@ export async function verifyLogin(req, res, next) {
       res.status(404);
       throw new Error('User not found');
     }
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'dev_secret', { expiresIn: '1d' });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'dev_secret',
+      { expiresIn: '1d' }
+    );
     res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
     next(err);
@@ -200,4 +209,3 @@ export async function resendOtp(req, res, next) {
     next(err);
   }
 }
-
